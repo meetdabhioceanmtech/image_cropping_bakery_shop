@@ -1,15 +1,17 @@
+// ignore_for_file: must_be_immutable
+
 library image_cropping;
 
 import 'dart:math';
 import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as Library;
 
-import 'common/compress_process.dart'
-    if (dart.library.html) 'common/compress_process_web.dart';
+import 'common/compress_process.dart' if (dart.library.html) 'common/compress_process_web.dart';
 import 'constant/strings.dart';
 
 part 'common/set_image_ratio.dart';
@@ -31,29 +33,32 @@ part 'widgets/crop_image_view.dart';
 part 'widgets/cropping_button.dart';
 
 class ImageCropping {
-  static Future<dynamic> cropImage(
-      {required BuildContext context,
-      required Uint8List imageBytes,
-      required Function(dynamic) onImageDoneListener,
-      VoidCallback? onImageStartLoading,
-      VoidCallback? onImageEndLoading,
-      CropAspectRatio? selectedImageRatio,
-      bool visibleOtherAspectRatios = true,
-      double squareBorderWidth = 2,
-      List<CropAspectRatio>? customAspectRatios,
-      Color squareCircleColor = Colors.orange,
-      double squareCircleSize = 30,
-      Color defaultTextColor = Colors.black,
-      Color selectedTextColor = Colors.orange,
-      Color colorForWhiteSpace = Colors.white,
-      int encodingQuality = 100,
-      String? workerPath,
-      bool isConstrain = true,
-      bool makeDarkerOutside = true,
-      EdgeInsets? imageEdgeInsets = const EdgeInsets.all(10),
-      bool rootNavigator = false,
-      OutputImageFormat outputImageFormat = OutputImageFormat.jpg,
-      Key? key}) {
+  static Future<dynamic> cropImage({
+    required BuildContext context,
+    required Uint8List imageBytes,
+    required Function(dynamic) onImageDoneListener,
+    VoidCallback? onImageStartLoading,
+    VoidCallback? onImageEndLoading,
+    CropAspectRatio? selectedImageRatio,
+    bool visibleOtherAspectRatios = true,
+    double squareBorderWidth = 2,
+    List<CropAspectRatio>? customAspectRatios,
+    Color squareCircleColor = Colors.orange,
+    double squareCircleSize = 30,
+    Color defaultTextColor = Colors.black,
+    Color selectedTextColor = Colors.orange,
+    Color colorForWhiteSpace = Colors.white,
+    int encodingQuality = 100,
+    String? workerPath,
+    bool isConstrain = true,
+    bool makeDarkerOutside = true,
+    EdgeInsets? imageEdgeInsets = const EdgeInsets.all(10),
+    bool rootNavigator = false,
+    OutputImageFormat outputImageFormat = OutputImageFormat.jpg,
+    Key? key,
+    required PreferredSizeWidget appBar,
+    required Widget cropButton,
+  }) {
     /// Here, we are pushing a image cropping2 screen.
     return Navigator.of(context, rootNavigator: rootNavigator).push(
       MaterialPageRoute(
@@ -78,6 +83,8 @@ class ImageCropping {
           makeDarkerOutside: makeDarkerOutside,
           imageEdgeInsets: imageEdgeInsets,
           outputImageFormat: outputImageFormat,
+          appBar: appBar,
+          cropButton: cropButton,
         ),
       ),
     );
@@ -148,34 +155,36 @@ class ImageCroppingScreen extends StatefulWidget {
 
   /// Choose output format, default is jpg
   final OutputImageFormat outputImageFormat;
+  final PreferredSizeWidget appBar;
+  final Widget cropButton;
 
   ImageCroppingScreen(
-      this._context,
-      Uint8List _imageBytes,
-      this._onImageStartLoading,
-      this._onImageEndLoading,
-      this._onImageDoneListener,
-      this._colorForWhiteSpace,
-      {this.outputImageFormat = OutputImageFormat.jpg,
-      required this.selectedImageRatio,
-      required this.visibleOtherAspectRatios,
-      required this.squareBorderWidth,
-      required this.customAspectRatios,
-      required this.squareCircleColor,
-      required this.defaultTextColor,
-      required this.selectedTextColor,
-      required this.squareCircleSize,
-      this.encodingQuality = 100,
-      this.workerPath,
-      required this.isConstrain,
-      required this.makeDarkerOutside,
-      required this.imageEdgeInsets,
-      Key? key})
-      : super(key: key) {
+    this._context,
+    Uint8List _imageBytes,
+    this._onImageStartLoading,
+    this._onImageEndLoading,
+    this._onImageDoneListener,
+    this._colorForWhiteSpace, {
+    this.outputImageFormat = OutputImageFormat.jpg,
+    required this.selectedImageRatio,
+    required this.visibleOtherAspectRatios,
+    required this.squareBorderWidth,
+    required this.customAspectRatios,
+    required this.squareCircleColor,
+    required this.defaultTextColor,
+    required this.selectedTextColor,
+    required this.squareCircleSize,
+    this.encodingQuality = 100,
+    this.workerPath,
+    required this.isConstrain,
+    required this.makeDarkerOutside,
+    required this.imageEdgeInsets,
+    required this.appBar,
+    required this.cropButton,
+    Key? key,
+  }) : super(key: key) {
     process = ImageProcess(_imageBytes,
-        encodingQuality: encodingQuality,
-        workerPath: workerPath,
-        outputImageFormat: outputImageFormat);
+        encodingQuality: encodingQuality, workerPath: workerPath, outputImageFormat: outputImageFormat);
   }
 
   @override
@@ -203,43 +212,46 @@ class _ImageCroppingScreenState extends State<ImageCroppingScreen> {
               _setTopHeight();
               return SafeArea(
                 child: Material(
-                  child: Container(
-                    width: deviceWidth,
-                    child: Column(
-                      children: [
-                        CroppingButton(
-                          outputImageFormat: widget.outputImageFormat,
-                          imageBytes: widget.process.imageBytes,
-                          context: context,
-                          imageProcess: widget.process,
-                          onImageDoneListener: widget._onImageDoneListener,
-                          colorForWhiteSpace: widget._colorForWhiteSpace,
-                          headerMenuSize: widget.headerMenuSize,
-                          imageLoadingStarted: widget._onImageStartLoading,
-                          imageLoadingFinished: widget._onImageEndLoading,
-                          squareCircleSize: widget.squareCircleSize,
-                          state: state,
-                        ),
-                        CroppingImageView(
-                          state: state,
-                          squareCircleSize: widget.squareCircleSize,
-                          colorForWhiteSpace: widget._colorForWhiteSpace,
-                          squareBorderWidth: widget.squareBorderWidth,
-                          squareCircleColor: widget.squareCircleColor,
-                          makeDarkerOutside: widget.makeDarkerOutside,
-                          isConstrain: widget.isConstrain,
-                          imageEdgeInsets: widget.imageEdgeInsets,
-                        ),
-                        ShowCropImageRatios(
-                          state: state,
-                          defaultTextColor: widget.defaultTextColor,
-                          selectedImageRatio: widget.selectedImageRatio,
-                          selectedTextColor: widget.selectedTextColor,
-                          visibleOtherAspectRatios:
-                              widget.visibleOtherAspectRatios,
-                          customAspectRatios: widget.customAspectRatios,
-                        ),
-                      ],
+                  child: Scaffold(
+                    appBar: widget.appBar,
+                    body: Container(
+                      width: deviceWidth,
+                      child: Column(
+                        children: [
+                          CroppingImageView(
+                            state: state,
+                            squareCircleSize: widget.squareCircleSize,
+                            colorForWhiteSpace: widget._colorForWhiteSpace,
+                            squareBorderWidth: widget.squareBorderWidth,
+                            squareCircleColor: widget.squareCircleColor,
+                            makeDarkerOutside: widget.makeDarkerOutside,
+                            isConstrain: widget.isConstrain,
+                            imageEdgeInsets: widget.imageEdgeInsets,
+                          ),
+                          // ShowCropImageRatios(
+                          //   state: state,
+                          //   defaultTextColor: widget.defaultTextColor,
+                          //   selectedImageRatio: widget.selectedImageRatio,
+                          //   selectedTextColor: widget.selectedTextColor,
+                          //   visibleOtherAspectRatios: widget.visibleOtherAspectRatios,
+                          //   customAspectRatios: widget.customAspectRatios,
+                          // ),
+                          CroppingButton(
+                            outputImageFormat: widget.outputImageFormat,
+                            imageBytes: widget.process.imageBytes,
+                            context: context,
+                            imageProcess: widget.process,
+                            onImageDoneListener: widget._onImageDoneListener,
+                            colorForWhiteSpace: widget._colorForWhiteSpace,
+                            headerMenuSize: widget.headerMenuSize,
+                            imageLoadingStarted: widget._onImageStartLoading,
+                            imageLoadingFinished: widget._onImageEndLoading,
+                            squareCircleSize: widget.squareCircleSize,
+                            state: state,
+                            cropButton: widget.cropButton,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -266,8 +278,7 @@ class _ImageCroppingScreenState extends State<ImageCroppingScreen> {
       finalImageBytes = widget.process.imageBytes;
       _setDeviceHeightWidth();
 
-      SetImageRatio.setImageRatio(
-          null, widget.selectedImageRatio ?? CropAspectRatio.free());
+      SetImageRatio.setImageRatio(null, widget.selectedImageRatio ?? CropAspectRatio.free());
       SetImageRatio.setDefaultButtonPosition();
       setState(() {});
     }, (image) {
